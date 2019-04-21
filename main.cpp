@@ -197,7 +197,7 @@ int main(int argc, char** argv)
         cases = gTestCases;
         sleeve = 0;
     
-        #pragma omp parallel for
+        #pragma omp parallel for num_threads(32)
         for(int64_t i = gTestCases; i > 0; i--)
         {
             sort(&gInfo[sleeve]);
