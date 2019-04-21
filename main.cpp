@@ -97,7 +97,7 @@ void* sort(void* param)
 
 int main(int argc, char** argv)
 {
-    int iterations = 1024;
+    int iterations = 1;
 
     while(iterations--)
     {
