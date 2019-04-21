@@ -6,41 +6,11 @@
 #include <iostream>
 #include <pthread.h>
 
-#ifdef USE_EASTL
-
-#define stl eastl
-
-#include <EASTL/utility.h>
-#include <EASTL/string.h>
-#include <EASTL/map.h>
-
-const int64_t TOTAL_ALLOCATION = 90797926;
-char gHeap[TOTAL_ALLOCATION];
-char* gHeapPtr = gHeap;
-
-void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
-{
-    char* alloc = gHeapPtr;
-    gHeapPtr += size;
-    return alloc;
-}
-
-void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
-{
-    char* alloc = gHeapPtr;
-    gHeapPtr += size;
-    return alloc;
-}
-
-#else
-
 #define stl std
 
 #include <utility>
 #include <string>
 #include <map>
-
-#endif
 
 #define BUFFER_SIZE 704
 typedef stl::map<stl::string, int64_t> dictionary;
@@ -127,119 +97,123 @@ void* sort(void* param)
 
 int main(int argc, char** argv)
 {
-    fseek(stdin, 0, SEEK_END);
-    int64_t size = ftell(stdin);
-    rewind(stdin);
-    char* data = (char*)malloc(size);
-    int64_t read = fread(data, 1, size, stdin);
-    if(read != size) return -1;
+    int iterations = 1024;
 
-    char buffer[BUFFER_SIZE];
-    memset(buffer, '\0', BUFFER_SIZE);
-
-    char c;
-    char* current = buffer;
-    int64_t lineCount; int64_t a; int64_t b;
-    gTestCases = strtol(data, NULL, 10);
-    int64_t cases = gTestCases;
-    char* head = data;
-    char* tail = NULL;
-    stl::string tempString;
-    tempString.reserve(64);
-
-    int sleeve = 0;
-    while(cases--)
+    while(iterations--)
     {
-        head = strpbrk(head, "\n");
-        tail = strpbrk(head+1, "\n");
-
-        tail = strpbrk(head, " ");
-        int64_t length = tail - head;
-
-        lineCount = strtol(head, NULL, 10);
-        a = strtol(tail, NULL, 10);
-        head = strpbrk(tail+1, " ");
-        b = strtol(head+1, NULL, 10);
-        tail = strpbrk(head, "\n");
-        tail++;
-
-        gInfo[sleeve].i = sleeve;
-        gInfo[sleeve].a = a;
-        gInfo[sleeve].b = b;
-        gInfo[sleeve].testCase = &gDictionary[sleeve];
-
-        head = tail;
-        while(lineCount--)
+        fseek(stdin, 0, SEEK_END);
+        int64_t size = ftell(stdin);
+        rewind(stdin);
+        char* data = (char*)malloc(size);
+        int64_t read = fread(data, 1, size, stdin);
+        if(read != size) return -1;
+    
+        char buffer[BUFFER_SIZE];
+        memset(buffer, '\0', BUFFER_SIZE);
+    
+        char c;
+        char* current = buffer;
+        int64_t lineCount; int64_t a; int64_t b;
+        gTestCases = strtol(data, NULL, 10);
+        int64_t cases = gTestCases;
+        char* head = data;
+        char* tail = NULL;
+        stl::string tempString;
+        tempString.reserve(64);
+    
+        int sleeve = 0;
+        while(cases--)
         {
+            head = strpbrk(head, "\n");
+            tail = strpbrk(head+1, "\n");
+    
+            tail = strpbrk(head, " ");
+            int64_t length = tail - head;
+    
+            lineCount = strtol(head, NULL, 10);
+            a = strtol(tail, NULL, 10);
+            head = strpbrk(tail+1, " ");
+            b = strtol(head+1, NULL, 10);
             tail = strpbrk(head, "\n");
-            length = tail - head;
-            current = buffer;
-            while(length--)
+            tail++;
+    
+            gInfo[sleeve].i = sleeve;
+            gInfo[sleeve].a = a;
+            gInfo[sleeve].b = b;
+            gInfo[sleeve].testCase = &gDictionary[sleeve];
+    
+            head = tail;
+            while(lineCount--)
             {
-                c = *head;
-                if(c == ' ')
+                tail = strpbrk(head, "\n");
+                length = tail - head;
+                current = buffer;
+                while(length--)
                 {
-                    *current = '\0';
-                    current = buffer;
-                    c = *current;
-                    tempString.clear();
-                    while(c != '\0')
+                    c = *head;
+                    if(c == ' ')
                     {
-                        if(isspace(c))
-                        {
-                            //Do nothing
-                        }
-                        else
-                        {
-                            tempString.append(1, c);
-                        }
-                        current++;
+                        *current = '\0';
+                        current = buffer;
                         c = *current;
+                        tempString.clear();
+                        while(c != '\0')
+                        {
+                            if(isspace(c))
+                            {
+                                //Do nothing
+                            }
+                            else
+                            {
+                                tempString.append(1, c);
+                            }
+                            current++;
+                            c = *current;
+                        }
+                        stl::map<stl::string, int64_t>::iterator entry = gDictionary[sleeve].find(tempString);
+                        if(entry != gDictionary[sleeve].end())
+                        {
+                            entry->second++;
+                        }
+                        else if(tempString.length() >= 1)
+                        {              
+                            gDictionary[sleeve].insert(stl::make_pair(tempString, 1));
+                        }
+                        current = buffer;
+                        memset(buffer, '\0', BUFFER_SIZE);
                     }
-                    stl::map<stl::string, int64_t>::iterator entry = gDictionary[sleeve].find(tempString);
-                    if(entry != gDictionary[sleeve].end())
-                    {
-                        entry->second++;
+                    else
+                    { 
+                        *current = c;
+                        current++;
                     }
-                    else if(tempString.length() >= 1)
-                    {              
-                        gDictionary[sleeve].insert(stl::make_pair(tempString, 1));
-                    }
-                    current = buffer;
-                    memset(buffer, '\0', BUFFER_SIZE);
+                    head++;
                 }
-                else
-                { 
-                    *current = c;
-                    current++;
-                }
-                head++;
+                head = ++tail;
             }
-            head = ++tail;
+            head--;
+            sleeve++;
         }
-        head--;
-        sleeve++;
+    
+        cases = gTestCases;
+        sleeve = 0;
+        while(cases--)
+        {
+            pthread_create(&gThreads[sleeve], NULL, sort, &gInfo[sleeve]);
+            sleeve++;
+        }
+    
+        cases = gTestCases;
+        sleeve = 0;
+        while(cases--)
+        {
+            pthread_join(gThreads[sleeve], NULL);
+            if(sleeve < gTestCases-1)
+                std::cout << gOutput[sleeve] << std::endl;
+            else
+                std::cout << gOutput[sleeve];
+            sleeve++;
+        }
     }
-
-    cases = gTestCases;
-    sleeve = 0;
-    while(cases--)
-    {
-        pthread_create(&gThreads[sleeve], NULL, sort, &gInfo[sleeve]);
-        sleeve++;
-    }
-
-    cases = gTestCases;
-    sleeve = 0;
-    while(cases--)
-    {
-        pthread_join(gThreads[sleeve], NULL);
-        if(sleeve < gTestCases-1)
-            std::cout << gOutput[sleeve] << std::endl;
-        else
-            std::cout << gOutput[sleeve];
-        sleeve++;
-    }
-
     return 0;
 }
