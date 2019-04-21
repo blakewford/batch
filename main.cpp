@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <ctype.h>
 #include <iostream>
+#include <omp.h>
 
 
 #define stl std
@@ -96,7 +97,7 @@ void* sort(void* param)
 
 int main(int argc, char** argv)
 {
-    int iterations = 1024;
+    int iterations = 96;
 
     while(iterations--)
         {
@@ -197,7 +198,7 @@ int main(int argc, char** argv)
         cases = gTestCases;
         sleeve = 0;
     
-        #pragma omp parallel for num_threads(32)
+        #pragma omp parallel for num_threads(8)
         for(int64_t i = gTestCases; i > 0; i--)
         {
             sort(&gInfo[sleeve]);
